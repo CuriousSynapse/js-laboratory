@@ -7,7 +7,7 @@ Welcome to my **JavaScript Laboratory**.
 
 While I use React/Next.js for large-scale projects, this repository is dedicated to mastering **Vanilla JavaScript (ES6+)**. Here, I experiment with DOM manipulation, asynchronous programming (Promises/Async-Await), and algorithmic problem-solving in the browser environment.
 
-> 🌐 **[View Live Demos](https://CuriousSynapse.github.io/synaptic-js/)** *(Hosted on GitHub Pages)*
+> 🌐 **[View Live Demos](https://curioussynapse.github.io/js-laboratory/)** *(Hosted on GitHub Pages)*
 
 ## Project Catalog
 
