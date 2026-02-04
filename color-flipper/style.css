@@ -1,0 +1,32 @@
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container{
+    text-align: center;
+    padding: 25px;
+}
+
+#btn {
+    padding: 25px;
+    border-radius: 40px;
+    background-color: black;
+    color: aliceblue;
+    font-family: 'Gruppo';
+}
+
+.btn:hover{
+    border-color: bisque;
+    background: black;
+}
+
+
+h1 {
+  color: white;
+  font-family: 'Gruppo', sans-serif;
+  font-weight: 400;
+  text-align: center;
+}
