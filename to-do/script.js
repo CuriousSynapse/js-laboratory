@@ -18,18 +18,8 @@ list.addEventListener('click', (e) => {
         const input = li.querySelector('.subtask-input');
         const text = input.value.trim();
         if (!text) return;
-    
-        const subList = li.querySelector('.subtasks');
-        const subItem = document.createElement('li');
-        subItem.classList.add('subtask-item');
-        subItem.textContent = text;
 
-        const del = document.createElement('button');
-        del.textContent = 'Delete';
-        del.dataset.subaction = 'delete-subtask';
-
-        subItem.appendChild(del);
-        subList.appendChild(subItem);
+        addSubtask(li, text);
 
         input.value = '';
         saveTasks();
@@ -160,14 +150,23 @@ function addTask(text, done = false, shouldSave = true, id = null, dependsOn = '
     subInput.type = 'text';
     subInput.placeholder = 'Add subtask';
     subInput.classList.add('subtask-input');
+    subInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const text = subInput.value.trim();
+            if (!text) return;
+
+            addSubtask(li, text);
+            subInput.value = '';
+        }
+    });
 
     const subBtn = document.createElement('button');
+    subBtn.dataset.subaction = 'add-subtask';
     subBtn.textContent = 'Add subtask';
     subBtn.classList.add('subtask-add');
 
     li.appendChild(subInput);
     li.appendChild(subBtn);
-
 
     // buttons
 
@@ -365,6 +364,22 @@ function updateTimeBars() {
             bar.style.background = 'red';
         }
     });
+}
+
+function addSubtask(li, text) {
+    const subList = li.querySelector('.subtasks');
+    const subItem = document.createElement('li');
+    subItem.classList.add('subtask-item');
+    subItem.textContent = text;
+
+    const del = document.createElement('button');
+    del.textContent = 'Delete';
+    del.dataset.subaction = 'delete-subtask';
+
+    subItem.appendChild(del);
+    subList.appendChild(subItem);
+
+    saveTasks();
 }
 
 setInterval(updateTimeBars, 60 * 1000);
