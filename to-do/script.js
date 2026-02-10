@@ -2,6 +2,7 @@ const button = document.getElementById('add-btn');
 const input = document.getElementById('task-input');
 const list = document.getElementById('task-list');
 const dependsSelect = document.getElementById('depends-select');
+const dueDateInput = document.getElementById('due-date');
 
 list.addEventListener('click', (e) => {
 
@@ -9,6 +10,39 @@ list.addEventListener('click', (e) => {
     if (!li) return;
     
     const action = e.target.dataset.action;
+    
+    const subAction = e.target.dataset.subaction;
+
+    if (subAction === 'add-subtask') {
+        const li = e.target.closest('li');
+        const input = li.querySelector('.subtask-input');
+        const text = input.value.trim();
+        if (!text) return;
+    
+        const subList = li.querySelector('.subtasks');
+        const subItem = document.createElement('li');
+        subItem.classList.add('subtask-item');
+        subItem.textContent = text;
+
+        const del = document.createElement('button');
+        del.textContent = 'Delete';
+        del.dataset.subaction = 'delete-subtask';
+
+        subItem.appendChild(del);
+        subList.appendChild(subItem);
+
+        input.value = '';
+        saveTasks();
+        return;
+    }
+
+    if (subAction === 'delete-subtask') {
+        const subItem = e.target.closest('.subtask-item');
+        if (subItem) subItem.remove();
+        saveTasks();
+        return;
+    }
+
 
     if (action === 'delete') {
         li.remove();
@@ -66,16 +100,30 @@ list.addEventListener('click', (e) => {
         }
     }
 
+    if (e.target.closest('.subtask-input') || e.target.closest('.subtask-add')) {
+        return;
+    }
+
+
     li.classList.toggle('done');
     updateBlockedStatus();
     saveTasks();
     refreshDependsSelect();
 });
 
-function addTask(text, done = false, shouldSave = true, id = null, dependsOn = '') {
+function addTask(text, done = false, shouldSave = true, id = null, dependsOn = '', dueDate = '', createdAt = null) {
     const li = document.createElement('li');
 
     const taskId = id || Date.now().toString();
+
+    const created = createdAt || Date.now();
+    li.dataset.createdAt = created;
+    li.dataset.dueDate = dueDate || '';
+    
+    if (dependsOn && createsCycle(taskId, dependsOn)) {
+        alert('That dependency would create a loop. Please choose a different dependency.');
+        dependsOn = '';
+    }
     li.dataset.id = taskId;
     li.dataset.dependsOn = dependsOn;
 
@@ -95,6 +143,33 @@ function addTask(text, done = false, shouldSave = true, id = null, dependsOn = '
     dependsTag.classList.add('depends-label');
     dependsTag.style.display = 'none';
     li.appendChild(dependsTag);
+
+    const barWrap = document.createElement('div');
+    barWrap.classList.add('timebar');
+
+    const barFill = document.createElement('div');
+    barFill.classList.add('timebar-fill');
+    barWrap.appendChild(barFill);
+    li.appendChild(barWrap);
+
+    const subList = document.createElement('ul');
+    subList.classList.add('subtasks');
+    li.appendChild(subList);
+
+    const subInput = document.createElement('input');
+    subInput.type = 'text';
+    subInput.placeholder = 'Add subtask';
+    subInput.classList.add('subtask-input');
+
+    const subBtn = document.createElement('button');
+    subBtn.textContent = 'Add subtask';
+    subBtn.classList.add('subtask-add');
+
+    li.appendChild(subInput);
+    li.appendChild(subBtn);
+
+
+    // buttons
 
     const delBtn = document.createElement('button');
     delBtn.textContent = 'Delete';
@@ -121,19 +196,21 @@ function addTask(text, done = false, shouldSave = true, id = null, dependsOn = '
 
 button.addEventListener('click', () => {
     const text = input.value.trim();
+    const dueDate = dueDateInput.value;
     if (!text) return;
 
     const dependsOn = dependsSelect.value;
-    addTask(text, false, true, null, dependsOn);
+    addTask(text, false, true, null, dependsOn, dueDate);
 });
 
 input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         const text = input.value.trim();
+        const dueDate = dueDateInput.value;
         if (!text) return;
 
         const dependsOn = dependsSelect.value;
-        addTask(text, false, true, null, dependsOn);
+        addTask(text, false, true, null, dependsOn, dueDate);
     }
 })
 
@@ -141,11 +218,13 @@ function saveTasks() {
     const tasks = [];
 
     list.querySelectorAll('li').forEach(li => {
+        const dueDate = li.dataset.dueDate || '';
+        const createdAt = li.dataset.createdAt || '';
         const text = li.querySelector('span').textContent;
         const done = li.classList.contains('done');
         const id = li.dataset.id;
         const dependsOn = li.dataset.dependsOn || '';
-        tasks.push({ text, done, id, dependsOn });
+        tasks.push({ text, done, id, dependsOn, dueDate, createdAt });
     
     });
     localStorage.setItem('tasks', JSON.stringify(tasks));
@@ -158,7 +237,7 @@ function loadTasks() {
     const tasks = JSON.parse(data);
 
     tasks.forEach(task => {
-        addTask(task.text, task.done, false, task.id, task.dependsOn);
+        addTask(task.text, task.done, false, task.id, task.dependsOn, task.dueDate, task.createdAt);
     });
     refreshDependsSelect(); 
     updateBlockedStatus();
@@ -177,6 +256,7 @@ function refreshDependsSelect() {
 
     updateBlockedStatus();
     updateIndent();
+    updateTimeBars();
 }
 
 function updateBlockedStatus() {
@@ -238,5 +318,55 @@ function updateIndent() {
   });
 }
 
+function createsCycle(taskId, dependsOn) {
+    let currentId = dependsOn;
+
+    while (currentId) {
+        if (currentId === taskId) {
+            return true;
+        }
+        const parent = list.querySelector(`li[data-id="${currentId}"]`);
+        if (!parent) break;
+        currentId = parent.dataset.dependsOn || '';
+    
+    }
+    return false;
+}
+
+function updateTimeBars() {
+    const now = Date.now();
+    const monthMs = 30 * 24 * 60 * 60 * 1000;
+
+    list.querySelectorAll('li').forEach(li => {
+        const due = li.dataset.dueDate;
+        const bar = li.querySelector('.timebar-fill');
+
+        if (!bar) return;
+
+        if (!due) {
+            bar.style.width = '0%';
+            bar.style.background = '#ccc';
+            return;
+        }
+
+        const dueTime = new Date(due + 'T23:59:59').getTime();
+        
+        const remaining = dueTime - now;
+        const ratio = Math.max(0, Math.min(1, remaining / monthMs));
+
+        const percent = Math.round((1-ratio) * 100);
+
+        bar.style.width = percent + '%';
+        if (ratio > 0.5) {
+            bar.style.background = 'green';
+        } else if (ratio > 0.2) {
+            bar.style.background = 'orange';
+        } else {
+            bar.style.background = 'red';
+        }
+    });
+}
+
+setInterval(updateTimeBars, 60 * 1000);
 
 loadTasks();
