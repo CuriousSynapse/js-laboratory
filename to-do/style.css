@@ -13,7 +13,7 @@
 * { box-sizing: border-box; }
 
 body {
-  margin: 0;
+  margin: 15px;
   font-family: "Segoe UI", system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -32,7 +32,7 @@ h1 {
 
 .controls {
   display: flex;
-  gap: 10px;
+  gap: 20px;
   flex-wrap: wrap;
   align-items: center;
   background: var(--card);
@@ -50,6 +50,7 @@ input[type="text"], input[type="date"], select {
 
 button {
   padding: 6px 10px;
+  margin-left: 8px;
   border: 1px solid var(--border);
   background: #f3f4f6;
   border-radius: 8px;
@@ -72,7 +73,9 @@ button:hover {
   border: 1px solid var(--border);
   padding: 10px;
   border-radius: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  line-height: 1.6;
+  margin: 6px 0;
 }
 
 li.done span {
@@ -169,5 +172,20 @@ li {
   width: 0%;
   background: #4caf50;
   transition: width 0.3s ease;
+}
+
+/* textbox */
+input[type="text"] {
+  padding: 10px 12px;
+  height: 40px;
+  line-height: 20px;
+}
+
+#task-input {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  height: 35px;
+  font-size: 1rem;
+  border-radius: 10px;
 }
 
